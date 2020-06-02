@@ -33,10 +33,6 @@ class Screen2 : Fragment(R.layout.screen_2) {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onPause() {
         super.onPause()
         if(binding.video.isPlaying) {
@@ -58,21 +54,22 @@ class Screen2 : Fragment(R.layout.screen_2) {
         binding = Screen2Binding.bind(view)
         binding.mainViewModel = viewModel
         binding.lifecycleOwner = this.viewLifecycleOwner
-        observeNavigationEvent()
         observeFileUri()
         observeFileCompression()
     }
 
     private fun observeFileCompression() {
-/*
         viewModel.compressionStatus.observe(this.viewLifecycleOwner, Observer {
-            when (it) {
+            when (it.getContentIfNotHandled()) {
                 is OnSuccess -> {
-
+                    findNavController().navigate(R.id.action_screen2_to_screen3)
+                }
+                is AlreadyCompressed -> {
+                    Toast.makeText(requireContext(), "File already compressed.",Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_screen2_to_screen3)
                 }
             }
         })
-*/
     }
 
     private fun observeFileUri() {
@@ -88,12 +85,4 @@ class Screen2 : Fragment(R.layout.screen_2) {
         })
     }
 
-    private fun observeNavigationEvent() {
-        viewModel.compressedFileUri.observe(this.viewLifecycleOwner, Observer {
-            if(!it.hasBeenHandled) {
-                findNavController().navigate(R.id.action_screen2_to_screen3)
-            }
-        })
-
-    }
 }

@@ -56,14 +56,23 @@ class Screen3 : Fragment(R.layout.screen_3) {
         binding.mainViewModel = viewModel
         binding.lifecycleOwner = this.viewLifecycleOwner
         observeCompressedFileUri()
+        observePlayingStatus()
+    }
+
+    private fun observePlayingStatus() {
+        viewModel.compressedVideoPlayingStatus.observe(this.viewLifecycleOwner, Observer {
+            if(it) {
+                binding.video.start()
+            }else {
+                binding.video.pause()
+            }
+        })
     }
 
     private fun observeCompressedFileUri() {
         viewModel.compressedFileUri.observe(this.viewLifecycleOwner, Observer {
-            if(!it.hasBeenHandled) {
-                binding.video.setVideoURI(Uri.parse(it.getContentIfNotHandled()))
-                binding.video.start()
-            }
+            binding.video.setVideoURI(Uri.parse(it.peekContent()))
+            binding.video.start()
         })
     }
 }

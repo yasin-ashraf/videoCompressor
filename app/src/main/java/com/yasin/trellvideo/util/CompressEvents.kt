@@ -7,5 +7,6 @@ sealed class CompressEvents {
     object OnStart : CompressEvents()
     object OnFinish : CompressEvents()
     object OnSuccess : CompressEvents()
-    data class onError(val error : String) : CompressEvents()
+    object AlreadyCompressed : CompressEvents()
+    data class OnError(val error : String) : CompressEvents()
 }

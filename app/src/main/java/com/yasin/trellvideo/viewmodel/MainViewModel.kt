@@ -16,28 +16,36 @@ class MainViewModel constructor(
 
     val selectVideoFileEvent : MutableLiveData<Event<String>> = MutableLiveData()
     val selectedFileUri : MutableLiveData<String> = MutableLiveData()
-    val selectedFile : MutableLiveData<File> = MutableLiveData()
+    private val selectedFile : MutableLiveData<File> = MutableLiveData()
     val videoLastPlayedPosition : MutableLiveData<Int> = MutableLiveData(0)
     val bitRate : MutableLiveData<String> = MutableLiveData()
     val compressionStatusText : MutableLiveData<String> = MutableLiveData()
-    private val _compressionStatus : MutableLiveData<CompressEvents> = MutableLiveData()
+    private val _compressionStatus : MutableLiveData<Event<CompressEvents>> = MutableLiveData()
+    val compressionStatus : LiveData<Event<CompressEvents>> = _compressionStatus
     private val _compressedFileUri : MutableLiveData<Event<String>> = MutableLiveData()
     val compressedFileUri : LiveData<Event<String>> get() = _compressedFileUri
+    val compressedVideoPlayingStatus : MutableLiveData<Boolean> = MutableLiveData()
+    val compressedVideoPlayingStatusText : MutableLiveData<String> = MutableLiveData("Pause")
 
     fun setSelectFileEvent() {
+        _compressionStatus.value = Event(CompressEvents.OnStart) //set anything other than success / alreadyCompressed
         this.selectVideoFileEvent.value = Event("selectFile")
     }
 
     fun compressFile() {
         //compress video
-        videoCompressor
-            .setFile(selectedFile.value ?: return)
-            .setBitRate(bitRate.value.toString() + "k")
-            .setOutputPath(FileUtils.outputPath)
-            .setOutputFileName(Random().nextFloat().toString() + ".mp4")
-            .setCallback(ffMpegCallback)
-            .compress()
-        this.compressionStatusText.value = "Compressing..."
+        if(_compressionStatus.value?.peekContent() !in arrayOf(CompressEvents.OnSuccess, CompressEvents.AlreadyCompressed)) {
+            videoCompressor
+                .setFile(selectedFile.value ?: return)
+                .setBitRate(bitRate.value.toString() + "k")
+                .setOutputPath(FileUtils.outputPath)
+                .setOutputFileName(Random().nextFloat().toString() + ".mp4")
+                .setCallback(ffMpegCallback)
+                .compress()
+            this.compressionStatusText.value = "Compressing..."
+        }else {
+            _compressionStatus.value = Event(CompressEvents.AlreadyCompressed)
+        }
     }
 
     fun setSelectedVideoUriPath(uriPath : String) {
@@ -52,28 +60,34 @@ class MainViewModel constructor(
         this.videoLastPlayedPosition.postValue(position)
     }
 
+    fun toggleVideoPlaying(status : Boolean) {
+        if(status) compressedVideoPlayingStatusText.value = "Play"
+        else compressedVideoPlayingStatusText.value = "Pause"
+        this.compressedVideoPlayingStatus.value = !status
+    }
+
     private val ffMpegCallback : FFMpegCallback = object : FFMpegCallback {
         override fun onProgress(progress: String) {
-            _compressionStatus.value = CompressEvents.OnStart
+            _compressionStatus.value = Event(CompressEvents.OnStart)
         }
 
         override fun onSuccess(convertedFile: File) {
-            _compressionStatus.value = CompressEvents.OnSuccess
             compressionStatusText.value = "File Compressed"
             _compressedFileUri.value = Event(FileUtils.getUri(convertedFile).toString())
+            _compressionStatus.value = Event(CompressEvents.OnSuccess)
         }
 
         override fun onFailure(error: Exception) {
-            _compressionStatus.value = CompressEvents.onError(error.toString())
+            _compressionStatus.value = Event(CompressEvents.OnError(error.toString()))
             compressionStatusText.value = "File Compression Failed."
         }
 
         override fun onNotAvailable(error: Exception) {
-            _compressionStatus.value = CompressEvents.onError(error.toString())
+            _compressionStatus.value = Event(CompressEvents.OnError(error.toString()))
         }
 
         override fun onFinish() {
-            _compressionStatus.value = CompressEvents.OnFinish
+
         }
     }
 }
