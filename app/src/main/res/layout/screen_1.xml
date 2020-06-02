@@ -3,6 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+        <variable
+            name="mainViewModel"
+            type="com.yasin.trellvideo.viewmodel.MainViewModel" />
 
     </data>
 
@@ -17,6 +20,7 @@
             android:backgroundTint="?attr/colorPrimary"
             android:text="@string/select_video"
             android:textColor="@android:color/white"
+            android:onClick="@{() -> mainViewModel.navigateToSecond()}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

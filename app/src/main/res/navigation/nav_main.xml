@@ -7,7 +7,35 @@
 
     <fragment
         android:id="@+id/screen1"
-        android:name="com.yasin.trellvideo.Screen1"
+        android:name="com.yasin.trellvideo.ui.Screen1"
         android:label="Screen1"
-        tools:layout="@layout/screen_1"/>
+        tools:layout="@layout/screen_1">
+        <action
+            android:id="@+id/action_screen1_to_screen2"
+            app:destination="@id/screen2"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"
+            app:launchSingleTop="true"
+            app:popEnterAnim="@android:anim/fade_in"
+            app:popExitAnim="@android:anim/fade_out" />
+    </fragment>
+    <fragment
+        android:id="@+id/screen2"
+        android:name="com.yasin.trellvideo.ui.Screen2"
+        android:label="Screen2"
+        tools:layout="@layout/screen_2">
+        <action
+            android:id="@+id/action_screen2_to_screen3"
+            app:destination="@id/screen3"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"
+            app:launchSingleTop="true"
+            app:popEnterAnim="@android:anim/fade_in"
+            app:popExitAnim="@android:anim/fade_out" />
+    </fragment>
+    <fragment
+        android:id="@+id/screen3"
+        android:name="com.yasin.trellvideo.ui.Screen3"
+        android:label="Screen3"
+        tools:layout="@layout/screen_3"/>
 </navigation>
