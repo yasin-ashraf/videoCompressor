@@ -10,7 +10,7 @@ MVVM Architecture
 
 Using Architecture Components - LiveData & ViewModel  
 Jetpack Navigation Component  
-Data binding
+Data binding  
 FFMpeg library for compressing
 
 ### Walk-through
@@ -29,7 +29,7 @@ EditText at the centre to type the bit rate
 
 Compress video button compresses video and saves file in "CompressedVideo" folder in internal storage
 
-Navigates to Screen 3 on completion of compressing. 
+Navigates to Screen 3 on completion of compressing.   
 Clicking on compress button navigates to Screen 3 if the file is already compressed
 
 Screen 3 :
