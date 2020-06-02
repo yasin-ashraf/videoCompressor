@@ -1,0 +1,7 @@
+<resources>
+  <string name="app_name">TrellVideo</string>
+    <string name="select_video">Select Video</string>
+    <string name="type_bit_rate_here">type bit rate here</string>
+  <string name="compress_video">Compress Video</string>
+  <string name="play">Play</string>
+</resources>
