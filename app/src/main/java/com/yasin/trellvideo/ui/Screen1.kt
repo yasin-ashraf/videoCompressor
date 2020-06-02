@@ -1,7 +1,13 @@
 package com.yasin.trellvideo.ui
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.View
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -15,8 +21,8 @@ import com.yasin.trellvideo.viewmodel.MainViewModel
  */
 class Screen1 : Fragment(R.layout.screen_1) {
 
-    private lateinit var binding : Screen1Binding
-    private val viewModel : MainViewModel by navGraphViewModels(R.id.nav_main)
+    private lateinit var binding: Screen1Binding
+    private val viewModel: MainViewModel by navGraphViewModels(R.id.nav_main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,11 +38,105 @@ class Screen1 : Fragment(R.layout.screen_1) {
 
     private fun observeNavigationEvent() {
         viewModel.navigateToSecondScreen.observe(this.viewLifecycleOwner, Observer {
-            if(!it.hasBeenHandled) {
+            if (!it.hasBeenHandled) {
                 it.getContentIfNotHandled() // mark as handled
-                findNavController().navigate(R.id.action_screen1_to_screen2)
+                if (checkStoragePermissions()) {
+                    pickMediaFromGallery()
+                }
             }
         })
+    }
+
+    private fun checkStoragePermissions(): Boolean {
+        val permissionStorageRead = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+        val permissionStorageWrite = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        if (permissionStorageRead != PackageManager.PERMISSION_GRANTED || permissionStorageWrite != PackageManager.PERMISSION_GRANTED) {
+            requestStoragePermission()
+            return false
+        }
+        return true
+    }
+
+    private fun requestStoragePermission() {
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ),
+            REQUEST_PERMISSIONS_STORAGE
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            REQUEST_PERMISSIONS_STORAGE -> {
+                if (grantResults.isEmpty()
+                    || grantResults[0] != PackageManager.PERMISSION_GRANTED
+                ) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Permission Denied. Need storage access to upload video.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    pickMediaFromGallery()
+                }
+            }
+        }
+    }
+
+    private fun pickMediaFromGallery() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "video/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("video/*"))
+        }
+        startActivityForResult(intent, RC_MEDIA_PICKER)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode) {
+
+            RC_MEDIA_PICKER -> {
+
+                data?.data?.also { uri ->
+                    //get file type
+                    val mimeType: String? = requireContext().contentResolver.getType(uri)
+                    //get file size
+                    var fileName = ""
+                    requireContext().contentResolver.query(uri, null, null, null, null)?.use {
+                        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        it.moveToFirst()
+                        fileName = it.getString(nameIndex)
+                        it.close()
+                    }
+                    viewModel.setSelectedVideoUriPath(uri.toString())
+                    navigateToScreen2()
+                    Toast.makeText(requireContext(), uri.toString(), Toast.LENGTH_SHORT).show()
+                }
+            }
+
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private fun navigateToScreen2() {
+        findNavController().navigate(R.id.action_screen1_to_screen2)
+    }
+
+    companion object {
+        private const val REQUEST_PERMISSIONS_STORAGE = 1000
+        private const val RC_MEDIA_PICKER = 900
     }
 
 

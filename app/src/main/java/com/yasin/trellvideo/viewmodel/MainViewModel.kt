@@ -11,6 +11,8 @@ class MainViewModel : ViewModel() {
 
     val navigateToSecondScreen : MutableLiveData<Event<String>> = MutableLiveData()
     val navigateToThirdScreen : MutableLiveData<Event<String>> = MutableLiveData()
+    val selectedFileUri : MutableLiveData<String> = MutableLiveData()
+    val videoLastPlayedPosition : MutableLiveData<Int> = MutableLiveData(0)
 
     fun navigateToSecond() {
         this.navigateToSecondScreen.value = Event("navigateSecond")
@@ -18,5 +20,13 @@ class MainViewModel : ViewModel() {
 
     fun navigateToThird() {
         this.navigateToThirdScreen.value = Event("navigateThird")
+    }
+
+    fun setSelectedVideoUriPath(uriPath : String) {
+        this.selectedFileUri.value = uriPath
+    }
+
+    fun setLastPlayedPosition(position : Int) {
+        this.videoLastPlayedPosition.postValue(position)
     }
 }
