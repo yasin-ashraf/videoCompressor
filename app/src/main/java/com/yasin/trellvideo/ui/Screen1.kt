@@ -5,15 +5,20 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.yasin.trellvideo.R
 import com.yasin.trellvideo.databinding.Screen1Binding
+import com.yasin.trellvideo.util.FileUtils
+import com.yasin.trellvideo.util.VideoCompressor
 import com.yasin.trellvideo.viewmodel.MainViewModel
 
 /**
@@ -22,7 +27,16 @@ import com.yasin.trellvideo.viewmodel.MainViewModel
 class Screen1 : Fragment(R.layout.screen_1) {
 
     private lateinit var binding: Screen1Binding
-    private val viewModel: MainViewModel by navGraphViewModels(R.id.nav_main)
+    private val viewModel: MainViewModel by navGraphViewModels(R.id.nav_main) {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return MainViewModel(
+                    VideoCompressor.with(requireActivity())
+                ) as T
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +51,7 @@ class Screen1 : Fragment(R.layout.screen_1) {
     }
 
     private fun observeNavigationEvent() {
-        viewModel.navigateToSecondScreen.observe(this.viewLifecycleOwner, Observer {
+        viewModel.selectVideoFileEvent.observe(this.viewLifecycleOwner, Observer {
             if (!it.hasBeenHandled) {
                 it.getContentIfNotHandled() // mark as handled
                 if (checkStoragePermissions()) {
@@ -121,6 +135,10 @@ class Screen1 : Fragment(R.layout.screen_1) {
                         it.close()
                     }
                     viewModel.setSelectedVideoUriPath(uri.toString())
+
+                    val file = FileUtils.getFile(requireContext(), uri)
+                    Log.d("FILE", file?.absolutePath ?: "No path")
+                    viewModel.setVideoFile(file ?: return)
                     navigateToScreen2()
                     Toast.makeText(requireContext(), uri.toString(), Toast.LENGTH_SHORT).show()
                 }

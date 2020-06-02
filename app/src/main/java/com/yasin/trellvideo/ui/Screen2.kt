@@ -1,15 +1,20 @@
 package com.yasin.trellvideo.ui
 
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.yasin.trellvideo.R
 import com.yasin.trellvideo.databinding.Screen2Binding
+import com.yasin.trellvideo.util.CompressEvents
+import com.yasin.trellvideo.util.CompressEvents.*
+import com.yasin.trellvideo.util.VideoCompressor
 import com.yasin.trellvideo.viewmodel.MainViewModel
 
 /**
@@ -18,7 +23,16 @@ import com.yasin.trellvideo.viewmodel.MainViewModel
 class Screen2 : Fragment(R.layout.screen_2) {
 
     private lateinit var binding : Screen2Binding
-    private val viewModel : MainViewModel by navGraphViewModels(R.id.nav_main)
+    private val viewModel: MainViewModel by navGraphViewModels(R.id.nav_main) {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return MainViewModel(
+                    VideoCompressor.with(requireActivity())
+                ) as T
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +61,26 @@ class Screen2 : Fragment(R.layout.screen_2) {
         binding.lifecycleOwner = this.viewLifecycleOwner
         observeNavigationEvent()
         observeFileUri()
+        observeFileCompression()
+    }
+
+    private fun observeFileCompression() {
+        viewModel.compressionStatus.observe(this.viewLifecycleOwner, Observer {
+            when (it) {
+                is OnStart -> {
+                    Toast.makeText(requireContext(),"in progress", Toast.LENGTH_SHORT).show()
+                }
+                is OnSuccess -> {
+                    Toast.makeText(requireContext(),"on success!!", Toast.LENGTH_SHORT).show()
+                }
+                is OnFinish -> {
+                    Toast.makeText(requireContext(),"on finish!!", Toast.LENGTH_SHORT).show()
+                }
+                is onError -> {
+                    Toast.makeText(requireContext(),"on error!!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
     }
 
     private fun observeFileUri() {
@@ -63,10 +97,9 @@ class Screen2 : Fragment(R.layout.screen_2) {
     }
 
     private fun observeNavigationEvent() {
-        viewModel.navigateToThirdScreen.observe(this.viewLifecycleOwner, Observer {
+        viewModel.compressVideoFileEvent.observe(this.viewLifecycleOwner, Observer {
             if(!it.hasBeenHandled) {
-                it.getContentIfNotHandled()
-                findNavController().navigate(R.id.action_screen2_to_screen3)
+
             }
         })
 

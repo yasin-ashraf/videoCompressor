@@ -20,7 +20,7 @@
             android:backgroundTint="?attr/colorPrimary"
             android:text="@string/select_video"
             android:textColor="@android:color/white"
-            android:onClick="@{() -> mainViewModel.navigateToSecond()}"
+            android:onClick="@{() -> mainViewModel.setSelectFileEvent()}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
