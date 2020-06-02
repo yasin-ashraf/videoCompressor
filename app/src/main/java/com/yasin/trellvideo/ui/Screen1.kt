@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -18,7 +17,7 @@ import androidx.navigation.navGraphViewModels
 import com.yasin.trellvideo.R
 import com.yasin.trellvideo.databinding.Screen1Binding
 import com.yasin.trellvideo.util.FileUtils
-import com.yasin.trellvideo.util.VideoCompressor
+import com.yasin.trellvideo.VideoCompressor
 import com.yasin.trellvideo.viewmodel.MainViewModel
 
 /**

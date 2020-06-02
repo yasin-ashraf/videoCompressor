@@ -1,13 +1,13 @@
-package com.yasin.trellvideo.util
+package com.yasin.trellvideo
 
 import android.content.Context
 import android.util.Log
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException
+import com.yasin.trellvideo.util.FFMpegCallback
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 /**
  * Created by Yasin on 2/6/20.

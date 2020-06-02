@@ -3,6 +3,7 @@ package com.yasin.trellvideo.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.yasin.trellvideo.VideoCompressor
 import com.yasin.trellvideo.util.*
 import java.io.File
 import java.util.*

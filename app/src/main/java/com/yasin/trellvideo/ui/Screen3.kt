@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.navGraphViewModels
 import com.yasin.trellvideo.R
 import com.yasin.trellvideo.databinding.Screen3Binding
-import com.yasin.trellvideo.util.VideoCompressor
+import com.yasin.trellvideo.VideoCompressor
 import com.yasin.trellvideo.viewmodel.MainViewModel
 
 /**
