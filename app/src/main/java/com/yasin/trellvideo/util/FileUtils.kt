@@ -7,16 +7,16 @@ import android.database.Cursor
 import android.database.DatabaseUtils
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
-import java.io.File
-import java.io.FileFilter
+import java.io.*
 import java.text.DecimalFormat
 import java.util.*
+
 
 /**
  * Created by Yasin on 29/1/20.
@@ -43,6 +43,7 @@ object FileUtils {
     const val MIME_TYPE_VIDEO = "video/*"
     const val MIME_TYPE_APP = "application/*"
     const val HIDDEN_PREFIX = "."
+    const val DOCUMENTS_DIR = "documents"
 
     /**
      * Gets the extension of a file name, like ".png" or ".jpg".
@@ -212,6 +213,8 @@ object FileUtils {
                 val column_index = cursor.getColumnIndexOrThrow(column)
                 return cursor.getString(column_index)
             }
+        }catch (ex : java.lang.Exception) {
+          Log.e("EXCEPTION", ex.toString())
         } finally {
             cursor?.close()
         }
@@ -265,16 +268,41 @@ object FileUtils {
                 // TODO handle non-primary volumes
             } else if (isDownloadsDocument(uri)) {
                 val id = DocumentsContract.getDocumentId(uri)
-                val contentUri = ContentUris.withAppendedId(
-                    Uri.parse("content://downloads/public_downloads"),
-                    java.lang.Long.valueOf(id)
+
+                if (id != null && id.startsWith("raw:")) {
+                    return id.substring(4)
+                }
+
+                val contentUriPrefixesToTry = arrayOf(
+                    "content://downloads/public_downloads",
+                    "content://downloads/my_downloads",
+                    "content://downloads/all_downloads"
                 )
-                return getDataColumn(
-                    context,
-                    contentUri,
-                    null,
-                    null
-                )
+
+                for (contentUriPrefix in contentUriPrefixesToTry) {
+                    val contentUri = ContentUris.withAppendedId(
+                        Uri.parse(contentUriPrefix),
+                        java.lang.Long.valueOf(id!!)
+                    )
+                    try {
+                        val path = getDataColumn(context, contentUri, null, null)
+                        if (path != null) {
+                            return path
+                        }
+                    } catch (e: java.lang.Exception) {
+                    }
+                }
+
+                // path could not be retrieved using ContentResolver, therefore copy file to accessible cache using streams
+                val fileName: String? = getFileName(context, uri)
+                val cacheDir: File? = getDocumentCacheDir(context)
+                val file: File? = generateFileName(fileName, cacheDir)
+                var destinationPath: String? = null
+                destinationPath = file?.absolutePath
+                saveFileFromUri(context, uri, destinationPath ?: "")
+
+                return destinationPath
+
             } else if (isMediaDocument(uri)) {
                 val docId = DocumentsContract.getDocumentId(uri)
                 val split = docId.split(":").toTypedArray()
@@ -311,6 +339,101 @@ object FileUtils {
             return uri.path
         }
         return null
+    }
+
+    private fun saveFileFromUri(
+        context: Context,
+        uri: Uri,
+        destinationPath: String
+    ) {
+        var `is`: InputStream? = null
+        var bos: BufferedOutputStream? = null
+        try {
+            `is` = context.contentResolver.openInputStream(uri)
+            bos = BufferedOutputStream(FileOutputStream(destinationPath, false))
+            val buf = ByteArray(1024)
+            `is`?.read(buf)
+            do {
+                bos.write(buf)
+            } while (`is`?.read(buf) !== -1)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            try {
+                `is`?.close()
+                bos?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun generateFileName(
+        name: String?,
+        directory: File?
+    ): File? {
+        var name = name ?: return null
+        var file = File(directory, name)
+        if (file.exists()) {
+            var fileName = name
+            var extension = ""
+            val dotIndex = name.lastIndexOf('.')
+            if (dotIndex > 0) {
+                fileName = name.substring(0, dotIndex)
+                extension = name.substring(dotIndex)
+            }
+            var index = 0
+            while (file.exists()) {
+                index++
+                name = "$fileName($index)$extension"
+                file = File(directory, name)
+            }
+        }
+        try {
+            if (!file.createNewFile()) {
+                return null
+            }
+        } catch (e: IOException) {
+            Log.w(TAG, e)
+            return null
+        }
+        logDir(directory!!)
+        return file
+    }
+
+
+    fun getFileName(context: Context, uri: Uri): String? {
+        val mimeType = context.contentResolver.getType(uri)
+        var filename: String? = null
+        if (mimeType == null && context != null) {
+            val path = getPath(context, uri)
+            if (path == null) {
+                filename = getName(uri.toString())
+            } else {
+                val file = File(path)
+                filename = file.name
+            }
+        } else {
+            val returnCursor = context.contentResolver.query(
+                uri, null,
+                null, null, null
+            )
+            if (returnCursor != null) {
+                val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                returnCursor.moveToFirst()
+                filename = returnCursor.getString(nameIndex)
+                returnCursor.close()
+            }
+        }
+        return filename
+    }
+
+    fun getName(filename: String?): String? {
+        if (filename == null) {
+            return null
+        }
+        val index = filename.lastIndexOf('/')
+        return filename.substring(index + 1)
     }
 
     /**
@@ -494,6 +617,29 @@ object FileUtils {
         val fileName = file.name
         // Return directories only and skip hidden directories
         file.isDirectory && !fileName.startsWith(HIDDEN_PREFIX)
+    }
+
+    fun getDownloadsDir(): File? {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    }
+
+    fun getDocumentCacheDir(context: Context): File? {
+        val dir = File(context.cacheDir, DOCUMENTS_DIR)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        logDir(context.cacheDir)
+        logDir(dir)
+        return dir
+    }
+
+    private fun logDir(dir: File) {
+        if (!DEBUG) return
+        Log.d(TAG, "Dir=$dir")
+        val files = dir.listFiles()
+        for (file in files) {
+            Log.d(TAG, "File=" + file.path)
+        }
     }
 
     /**

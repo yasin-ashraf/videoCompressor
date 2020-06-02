@@ -12,7 +12,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.yasin.trellvideo.R
 import com.yasin.trellvideo.databinding.Screen2Binding
-import com.yasin.trellvideo.util.CompressEvents
 import com.yasin.trellvideo.util.CompressEvents.*
 import com.yasin.trellvideo.util.VideoCompressor
 import com.yasin.trellvideo.viewmodel.MainViewModel
@@ -65,22 +64,15 @@ class Screen2 : Fragment(R.layout.screen_2) {
     }
 
     private fun observeFileCompression() {
+/*
         viewModel.compressionStatus.observe(this.viewLifecycleOwner, Observer {
             when (it) {
-                is OnStart -> {
-                    Toast.makeText(requireContext(),"in progress", Toast.LENGTH_SHORT).show()
-                }
                 is OnSuccess -> {
-                    Toast.makeText(requireContext(),"on success!!", Toast.LENGTH_SHORT).show()
-                }
-                is OnFinish -> {
-                    Toast.makeText(requireContext(),"on finish!!", Toast.LENGTH_SHORT).show()
-                }
-                is onError -> {
-                    Toast.makeText(requireContext(),"on error!!", Toast.LENGTH_SHORT).show()
+
                 }
             }
         })
+*/
     }
 
     private fun observeFileUri() {
@@ -97,9 +89,9 @@ class Screen2 : Fragment(R.layout.screen_2) {
     }
 
     private fun observeNavigationEvent() {
-        viewModel.compressVideoFileEvent.observe(this.viewLifecycleOwner, Observer {
+        viewModel.compressedFileUri.observe(this.viewLifecycleOwner, Observer {
             if(!it.hasBeenHandled) {
-
+                findNavController().navigate(R.id.action_screen2_to_screen3)
             }
         })
 

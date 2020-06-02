@@ -124,14 +124,8 @@ class Screen1 : Fragment(R.layout.screen_1) {
             RC_MEDIA_PICKER -> {
 
                 data?.data?.also { uri ->
-                    //get file type
-                    val mimeType: String? = requireContext().contentResolver.getType(uri)
-                    //get file size
-                    var fileName = ""
                     requireContext().contentResolver.query(uri, null, null, null, null)?.use {
-                        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                         it.moveToFirst()
-                        fileName = it.getString(nameIndex)
                         it.close()
                     }
                     viewModel.setSelectedVideoUriPath(uri.toString())

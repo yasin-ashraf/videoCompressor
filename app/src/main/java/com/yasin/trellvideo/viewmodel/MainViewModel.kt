@@ -15,19 +15,21 @@ class MainViewModel constructor(
 ): ViewModel() {
 
     val selectVideoFileEvent : MutableLiveData<Event<String>> = MutableLiveData()
-    val compressVideoFileEvent : MutableLiveData<Event<String>> = MutableLiveData()
     val selectedFileUri : MutableLiveData<String> = MutableLiveData()
     val selectedFile : MutableLiveData<File> = MutableLiveData()
     val videoLastPlayedPosition : MutableLiveData<Int> = MutableLiveData(0)
     val bitRate : MutableLiveData<String> = MutableLiveData()
+    val compressionStatusText : MutableLiveData<String> = MutableLiveData()
     private val _compressionStatus : MutableLiveData<CompressEvents> = MutableLiveData()
-    val compressionStatus : LiveData<CompressEvents> get() = _compressionStatus
+    private val _compressedFileUri : MutableLiveData<Event<String>> = MutableLiveData()
+    val compressedFileUri : LiveData<Event<String>> get() = _compressedFileUri
 
     fun setSelectFileEvent() {
         this.selectVideoFileEvent.value = Event("selectFile")
     }
 
-    fun setCompressFileEvent() {
+    fun compressFile() {
+        //compress video
         videoCompressor
             .setFile(selectedFile.value ?: return)
             .setBitRate(bitRate.value.toString() + "k")
@@ -35,7 +37,7 @@ class MainViewModel constructor(
             .setOutputFileName(Random().nextFloat().toString() + ".mp4")
             .setCallback(ffMpegCallback)
             .compress()
-        this.compressVideoFileEvent.value = Event("compressFile")
+        this.compressionStatusText.value = "Compressing..."
     }
 
     fun setSelectedVideoUriPath(uriPath : String) {
@@ -57,10 +59,13 @@ class MainViewModel constructor(
 
         override fun onSuccess(convertedFile: File) {
             _compressionStatus.value = CompressEvents.OnSuccess
+            compressionStatusText.value = "File Compressed"
+            _compressedFileUri.value = Event(FileUtils.getUri(convertedFile).toString())
         }
 
         override fun onFailure(error: Exception) {
             _compressionStatus.value = CompressEvents.onError(error.toString())
+            compressionStatusText.value = "File Compression Failed."
         }
 
         override fun onNotAvailable(error: Exception) {
