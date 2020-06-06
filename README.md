@@ -1,4 +1,4 @@
-# Trell Android Assignment - Yasin Ashraf
+# VideoCompressor sample with ffMpeg library
 
 ### Language : Kotlin
 
